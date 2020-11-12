@@ -1,16 +1,62 @@
 ﻿@page "/spice"
 
 @using DataLibrary
+@using BlazorServer.Models
+@using Microsoft.Extensions.Configuration
+
 @inject IDataAccess _dataAccess
+@inject IConfiguration _config
 
 <h3>Spice</h3>
 
+<button class="btn btn-primary" @onclick="InsertData">Insert</button>
+<button class="btn btn-warning" @onclick="UpdateData">Update</button>
+<button class="btn btn-danger" @onclick="DeleteData">Delete</button>
+
+@if (spices == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    foreach(var spice in spices)
+    {
+        <p>
+            @spice.Name @spice.Quantity
+        </p>
+    }
+}
+
 @code {
 
+    List<SpiceModel> spices;
 
+    private async Task InsertData()
+    {
+        var sql = "insert into spice (name, quantity) values (@name, @quantity);";
+
+        await _dataAccess.SaveData(sql, new { name = "Muskatnuss", quantity = 1},  _config.GetConnectionString("default"));
+    }
+
+    private async Task UpdateData()
+    {
+        var sql = "update spice set name = @name where idspice = @idspice";
+        await _dataAccess.SaveData(sql, new { name = "Muskatnuss", idspice = 1},  _config.GetConnectionString("default"));
+
+        await OnInitializedAsync();
+    }
+
+        private async Task DeleteData()
+    {
+        var sql = "delete from spice where idspice = @idspice";
+        await _dataAccess.SaveData(sql, new {idspice = 1},  _config.GetConnectionString("default"));
+
+        await OnInitializedAsync();
+    }
 
     protected override async Task OnInitializedAsync()
     {
-        //await _dataAccess.LoadData();
+        var sql = "select * from spice";
+        spices = await _dataAccess.LoadData<SpiceModel, dynamic>(sql, new { }, _config.GetConnectionString("default"));
     }
 }
